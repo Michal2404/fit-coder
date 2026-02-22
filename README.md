@@ -17,6 +17,7 @@
 - Auto-shrinks during breaks to a compact timer-only widget
 - Keeps the widget compact during both timer and reps-entry phases
 - Compact mode shows timer, progress bar, `Next:` exercise, and a `View stats` button
+- Compact mode also includes a `Pause/Resume` button for the timer
 - During reps-entry phase, compact mode adds only the reps input controls
 - Window size can be adjusted by dragging edges
 

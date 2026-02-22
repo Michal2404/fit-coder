@@ -272,6 +272,7 @@ class FitCoderWidgetApp:
         self.reps_row: "tk.Frame" | None = None
         self.control_row: "tk.Frame" | None = None
         self.view_stats_button: "tk.Button" | None = None
+        self.quick_pause_button: "tk.Button" | None = None
         self.stats_popup: "tk.Toplevel | None" = None
         self.stats_popup_text: "tk.Text | None" = None
         self.alarm_active = False
@@ -493,6 +494,21 @@ class FitCoderWidgetApp:
             fg=self.palette["text"],
             bg=self.palette["panel"],
         ).pack(side="left", padx=(6, 0))
+        self.quick_pause_button = tk.Button(
+            self.next_row,
+            text="Pause",
+            command=self._toggle_pause,
+            font=("Helvetica", 8, "bold"),
+            bg="#f3f4f6",
+            fg=self.palette["text"],
+            activebackground="#e5e7eb",
+            relief="flat",
+            bd=0,
+            padx=6,
+            pady=1,
+            state="disabled",
+        )
+        self.quick_pause_button.pack(side="right", padx=(0, 4))
         self.view_stats_button = tk.Button(
             self.next_row,
             text="View stats",
@@ -673,6 +689,25 @@ class FitCoderWidgetApp:
                 self.stats_popup.attributes("-topmost", should_pin)
             except tk.TclError:
                 pass
+
+    def _sync_pause_buttons(self) -> None:
+        if not self.session_active:
+            text = "Pause"
+            state = "disabled"
+        elif self.waiting_for_reps:
+            text = "Pause"
+            state = "disabled"
+        elif self.timer_running:
+            text = "Pause"
+            state = "normal"
+        else:
+            text = "Resume"
+            state = "normal"
+
+        if self.start_pause_button is not None:
+            self.start_pause_button.config(text=text, state=state)
+        if self.quick_pause_button is not None:
+            self.quick_pause_button.config(text=text, state=state)
 
     def _current_window_position(self) -> tuple[int, int]:
         geometry = self.root.geometry()
@@ -987,15 +1022,13 @@ class FitCoderWidgetApp:
         if self.timer_running:
             return
         self.timer_running = True
-        if self.start_pause_button is not None:
-            self.start_pause_button.config(text="Pause", state="normal")
+        self._sync_pause_buttons()
         self._schedule_tick()
 
     def _pause_timer(self) -> None:
         self.timer_running = False
         self._cancel_timer()
-        if self.start_pause_button is not None:
-            self.start_pause_button.config(text="Resume", state="normal")
+        self._sync_pause_buttons()
         self._set_status(f"Paused. Next: {self._current_exercise_name()}")
 
     def _toggle_pause(self) -> None:
@@ -1039,10 +1072,9 @@ class FitCoderWidgetApp:
             self.reps_entry.focus_set()
         if self.log_reps_button is not None:
             self.log_reps_button.config(state="normal")
-        if self.start_pause_button is not None:
-            self.start_pause_button.config(state="disabled")
         if self.skip_button is not None:
             self.skip_button.config(state="disabled")
+        self._sync_pause_buttons()
 
         self.root.bell()
         self._start_alarm_loop()
@@ -1072,12 +1104,11 @@ class FitCoderWidgetApp:
             self.reps_entry.config(state="disabled")
         if self.log_reps_button is not None:
             self.log_reps_button.config(state="disabled")
-        if self.start_pause_button is not None:
-            self.start_pause_button.config(state="normal", text="Pause")
         if self.skip_button is not None:
             self.skip_button.config(state="normal")
         if self.timer_label is not None:
             self.timer_label.config(fg=self.palette["accent"])
+        self._sync_pause_buttons()
 
         self._refresh_stats_view()
         self._update_live_panel()
@@ -1124,8 +1155,6 @@ class FitCoderWidgetApp:
         self._apply_layout_mode()
 
         self._set_setup_enabled(False)
-        if self.start_pause_button is not None:
-            self.start_pause_button.config(state="normal", text="Pause")
         if self.skip_button is not None:
             self.skip_button.config(state="normal")
         if self.reps_entry is not None:
@@ -1134,6 +1163,7 @@ class FitCoderWidgetApp:
             self.log_reps_button.config(state="disabled")
         if self.timer_label is not None:
             self.timer_label.config(fg=self.palette["accent"])
+        self._sync_pause_buttons()
 
         self._refresh_stats_view()
         self._update_live_panel()
@@ -1154,8 +1184,6 @@ class FitCoderWidgetApp:
         self._apply_layout_mode(force=True)
 
         self._set_setup_enabled(True)
-        if self.start_pause_button is not None:
-            self.start_pause_button.config(state="disabled", text="Pause")
         if self.skip_button is not None:
             self.skip_button.config(state="disabled")
         if self.reps_entry is not None:
@@ -1164,6 +1192,7 @@ class FitCoderWidgetApp:
             self.log_reps_button.config(state="disabled")
         if self.timer_label is not None:
             self.timer_label.config(fg=self.palette["accent"])
+        self._sync_pause_buttons()
 
         self._update_live_panel()
         self._refresh_stats_view()
