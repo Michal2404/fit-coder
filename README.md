@@ -1,23 +1,26 @@
 # Fit Coder
 
-`fit-coder` is a simple terminal app that reminds programmers to exercise during long work sessions.
+`fit-coder` is a simple app that reminds programmers to exercise during long work sessions.
 
 ## What it does
 
-- Asks how many exercises you want in your routine
-- Asks how long each break should be (minutes)
-- Collects exercise names
-- Runs an ongoing timer and rotates through exercises
+- Opens a movable widget window when you run `fitcoder`
+- Lets you configure everything inside the widget
+- Set number of exercises
+- Set break length (minutes)
+- Set exercise names
+- Runs the timer and rotates through exercises
 - Rings a stronger alarm when break time is over (system sound first, terminal bell fallback)
-- Prompts you to enter reps after each exercise round
+- Click anywhere in the widget to mute an active alarm
+- Lets you log reps directly in the widget when the break ends
 - Tracks and displays session stats (total reps + per-exercise totals)
-- Supports an optional mini movable widget window
-- Shows running countdown timer + progress bar
-- Shows current status (what is next)
-- Shows live stats (reps, rounds, per-exercise totals)
-- Allows adjustable size by dragging edges or quick `S/M/L` buttons
+- Auto-shrinks during breaks to a compact timer-only widget
+- Keeps the widget compact during both timer and reps-entry phases
+- Compact mode shows timer, progress bar, `Next:` exercise, and a `View stats` button
+- During reps-entry phase, compact mode adds only the reps input controls
+- Window size can be adjusted by dragging edges
 
-The app runs continuously until you stop it with `Ctrl+C`.
+The app runs until you close it.
 
 ## Run
 
@@ -42,5 +45,5 @@ fitcoder
 ## Widget Notes
 
 - The widget uses Python `tkinter` (standard library).
-- If `tkinter` or a GUI display is unavailable, the app automatically falls back to CLI-only mode.
+- If `tkinter` or a GUI display is unavailable, the app automatically falls back to CLI mode.
 - Use `Pin` in the widget header to keep it always on top or allow normal stacking.
