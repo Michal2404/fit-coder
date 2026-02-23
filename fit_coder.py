@@ -41,6 +41,44 @@ def format_duration(total_seconds: int) -> str:
     return f"{minutes:02d}:{seconds:02d}"
 
 
+def _stats_totals(exercises: list[ExerciseStats]) -> tuple[int, int]:
+    total_reps = sum(ex.total_reps for ex in exercises)
+    total_rounds = sum(ex.rounds_completed for ex in exercises)
+    return total_reps, total_rounds
+
+
+def _stats_table(exercises: list[ExerciseStats]) -> str:
+    headers = ("Exercise", "Reps", "Rounds")
+
+    name_width = len(headers[0])
+    reps_width = len(headers[1])
+    rounds_width = len(headers[2])
+
+    for ex in exercises:
+        name_width = max(name_width, len(ex.name))
+        reps_width = max(reps_width, len(str(ex.total_reps)))
+        rounds_width = max(rounds_width, len(str(ex.rounds_completed)))
+
+    border = (
+        f"+-{'-' * name_width}-+-{'-' * reps_width}-+-{'-' * rounds_width}-+"
+    )
+    lines = [
+        border,
+        (
+            f"| {headers[0].ljust(name_width)} | {headers[1].rjust(reps_width)} "
+            f"| {headers[2].rjust(rounds_width)} |"
+        ),
+        border,
+    ]
+    for ex in exercises:
+        lines.append(
+            f"| {ex.name.ljust(name_width)} | {str(ex.total_reps).rjust(reps_width)} "
+            f"| {str(ex.rounds_completed).rjust(rounds_width)} |"
+        )
+    lines.append(border)
+    return "\n".join(lines)
+
+
 def _run_alarm_command(command: list[str]) -> bool:
     try:
         completed = subprocess.run(
@@ -158,14 +196,13 @@ def ask_exercise_name(index: int) -> str:
 
 
 def print_stats(exercises: list[ExerciseStats]) -> None:
-    total_reps = sum(ex.total_reps for ex in exercises)
-    total_rounds = sum(ex.rounds_completed for ex in exercises)
+    total_reps, total_rounds = _stats_totals(exercises)
+    table = _stats_table(exercises)
     print("\nSession stats")
-    print(f"- Total reps: {total_reps}")
-    print(f"- Total completed rounds: {total_rounds}")
-    print("- Per exercise:")
-    for ex in exercises:
-        print(f"  {ex.name}: {ex.total_reps} reps across {ex.rounds_completed} rounds")
+    print(f"Total reps: {total_reps}")
+    print(f"Total completed rounds: {total_rounds}")
+    print()
+    print(table)
     print()
 
 
@@ -252,7 +289,7 @@ class FitCoderWidgetApp:
 
         self.compact_mode = False
         self.compact_waiting_state = False
-        self.expanded_size = (430, 650)
+        self.setup_size = (430, 285)
         self.compact_size = (280, 145)
 
         self.timer_label: "tk.Label" | None = None
@@ -306,8 +343,8 @@ class FitCoderWidgetApp:
         )
 
         self.root.title("FitCoder")
-        self.root.geometry("430x650+60+50")
-        self.root.minsize(340, 500)
+        self.root.geometry(f"{self.setup_size[0]}x{self.setup_size[1]}+60+50")
+        self.root.minsize(340, 240)
         self.root.configure(bg=self.palette["bg"])
         self.root.attributes("-topmost", True)
 
@@ -619,11 +656,12 @@ class FitCoderWidgetApp:
         self.stats_text = tk.Text(
             self.stats_card,
             height=9,
-            font=("Helvetica", 10),
+            font=("Courier", 10),
             bg=self.palette["panel"],
             fg=self.palette["text"],
             relief="flat",
             highlightthickness=0,
+            wrap="none",
             padx=1,
             pady=2,
         )
@@ -646,8 +684,8 @@ class FitCoderWidgetApp:
                 else:
                     size = max(36, min(60, event.width // 8))
                 self.timer_font.configure(size=size)
-            if not self.compact_mode and event.width > 0 and event.height > 0:
-                self.expanded_size = (event.width, event.height)
+            if (not self.session_active) and event.width > 0 and event.height > 0:
+                self.setup_size = (event.width, event.height)
 
     def _on_enter_pressed(self, _: "tk.Event") -> None:
         if self.waiting_for_reps:
@@ -743,12 +781,6 @@ class FitCoderWidgetApp:
         if not force and should_compact == self.compact_mode and not waiting_state_changed:
             return
 
-        if should_compact and not self.compact_mode:
-            current_width = self.root.winfo_width()
-            current_height = self.root.winfo_height()
-            if current_width >= 340 and current_height >= 500:
-                self.expanded_size = (current_width, current_height)
-
         self.compact_mode = should_compact
         self.compact_waiting_state = self.waiting_for_reps
 
@@ -756,12 +788,7 @@ class FitCoderWidgetApp:
             if self.compact_mode:
                 self.header_frame.pack_forget()
             elif not self.header_frame.winfo_ismapped():
-                if self.setup_card is not None and self.setup_card.winfo_ismapped():
-                    self.header_frame.pack(fill="x", before=self.setup_card)
-                elif self.live_card is not None and self.live_card.winfo_ismapped():
-                    self.header_frame.pack(fill="x", before=self.live_card)
-                else:
-                    self.header_frame.pack(fill="x")
+                self.header_frame.pack(fill="x")
 
         if self.setup_card is not None:
             if not self.session_active:
@@ -770,14 +797,15 @@ class FitCoderWidgetApp:
             else:
                 self.setup_card.pack_forget()
 
-        if self.live_card is not None and not self.live_card.winfo_ismapped():
-            self.live_card.pack(fill="x", pady=(0, 8))
+        if self.live_card is not None:
+            if self.session_active:
+                if not self.live_card.winfo_ismapped():
+                    self.live_card.pack(fill="x", pady=(0, 8))
+            else:
+                self.live_card.pack_forget()
 
         if self.stats_card is not None:
-            if self.compact_mode:
-                self.stats_card.pack_forget()
-            elif not self.stats_card.winfo_ismapped():
-                self.stats_card.pack(fill="both", expand=True)
+            self.stats_card.pack_forget()
 
         if self.compact_mode:
             self._hide_row(self.status_label)
@@ -797,19 +825,12 @@ class FitCoderWidgetApp:
         else:
             self._show_row(self.status_label, fill="x", pady=(0, 6))
             self._show_row(self.next_row, fill="x")
-            self._show_row(self.reps_row, fill="x", pady=(9, 4))
-            self._show_row(self.control_row, fill="x", pady=(5, 0))
-            self.root.minsize(340, 500)
-            width = max(self.expanded_size[0], 340)
-            height = max(self.expanded_size[1], 500)
+            self._hide_row(self.reps_row)
+            self._hide_row(self.control_row)
+            self.root.minsize(340, 240)
+            width = max(self.setup_size[0], 340)
+            height = max(self.setup_size[1], 240)
             self._set_window_size(width, height)
-
-            if self.waiting_for_reps:
-                self.root.lift()
-                try:
-                    self.root.focus_force()
-                except tk.TclError:
-                    pass
 
     def _set_status(self, message: str, *, is_error: bool = False) -> None:
         self.status_var.set(message)
@@ -906,16 +927,18 @@ class FitCoderWidgetApp:
             self.total_rounds_var.set("0")
             return "No session started yet."
 
-        total_reps = sum(ex.total_reps for ex in self.exercises)
-        total_rounds = sum(ex.rounds_completed for ex in self.exercises)
+        total_reps, total_rounds = _stats_totals(self.exercises)
         self.total_reps_var.set(str(total_reps))
         self.total_rounds_var.set(str(total_rounds))
-        lines = [f"Total reps: {total_reps}", f"Total rounds: {total_rounds}", "", "Exercises:"]
-        for ex in self.exercises:
-            lines.append(
-                f"- {ex.name}: {ex.total_reps} reps across {ex.rounds_completed} rounds"
-            )
-        return "\n".join(lines)
+        table = _stats_table(self.exercises)
+        return "\n".join(
+            [
+                f"Total reps: {total_reps}",
+                f"Total rounds: {total_rounds}",
+                "",
+                table,
+            ]
+        )
 
     def _refresh_stats_popup(self) -> None:
         if self.stats_popup_text is None:
@@ -964,11 +987,12 @@ class FitCoderWidgetApp:
 
         text = tk.Text(
             popup,
-            font=("Helvetica", 10),
+            font=("Courier", 10),
             bg=self.palette["panel"],
             fg=self.palette["text"],
             relief="flat",
             highlightthickness=0,
+            wrap="none",
             padx=2,
             pady=2,
         )

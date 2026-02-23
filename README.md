@@ -13,7 +13,8 @@
 - Rings a stronger alarm when break time is over (system sound first, terminal bell fallback)
 - Click anywhere in the widget to mute an active alarm
 - Lets you log reps directly in the widget when the break ends
-- Tracks and displays session stats (total reps + per-exercise totals)
+- Tracks and displays session stats in a table format (totals + per-exercise rows)
+- Starts in setup-only view (header + routine setup), then switches to compact timer view after Start Session
 - Auto-shrinks during breaks to a compact timer-only widget
 - Keeps the widget compact during both timer and reps-entry phases
 - Compact mode shows timer, progress bar, `Next:` exercise, and a `View stats` button
