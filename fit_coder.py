@@ -290,7 +290,7 @@ class FitCoderWidgetApp:
         self.compact_mode = False
         self.compact_waiting_state = False
         self.setup_size = (430, 285)
-        self.compact_size = (280, 145)
+        self.compact_size = (300, 165)
 
         self.timer_label: "tk.Label" | None = None
         self.timer_font: "tkfont.Font" | None = None
@@ -517,20 +517,6 @@ class FitCoderWidgetApp:
 
         self.next_row = tk.Frame(self.live_card, bg=self.palette["panel"])
         self.next_row.pack(fill="x")
-        tk.Label(
-            self.next_row,
-            text="Next:",
-            font=("Helvetica", 10, "bold"),
-            fg=self.palette["subtle"],
-            bg=self.palette["panel"],
-        ).pack(side="left")
-        tk.Label(
-            self.next_row,
-            textvariable=self.next_exercise_var,
-            font=("Helvetica", 10),
-            fg=self.palette["text"],
-            bg=self.palette["panel"],
-        ).pack(side="left", padx=(6, 0))
         self.quick_pause_button = tk.Button(
             self.next_row,
             text="Pause",
@@ -559,7 +545,24 @@ class FitCoderWidgetApp:
             padx=6,
             pady=1,
         )
-        self.view_stats_button.pack(side="right")
+        self.view_stats_button.pack(side="right", padx=(0, 6))
+        tk.Label(
+            self.next_row,
+            text="Next:",
+            font=("Helvetica", 10, "bold"),
+            fg=self.palette["subtle"],
+            bg=self.palette["panel"],
+        ).pack(side="left")
+        self.next_exercise_label = tk.Label(
+            self.next_row,
+            textvariable=self.next_exercise_var,
+            font=("Helvetica", 10),
+            fg=self.palette["text"],
+            bg=self.palette["panel"],
+            width=9,
+            anchor="w",
+        )
+        self.next_exercise_label.pack(side="left", padx=(6, 0))
 
         self.reps_row = tk.Frame(self.live_card, bg=self.palette["panel"])
         self.reps_row.pack(fill="x", pady=(9, 4))
@@ -764,14 +767,16 @@ class FitCoderWidgetApp:
     def _show_row(self, widget: "tk.Widget | None", **pack_kwargs: object) -> None:
         if widget is None:
             return
-        if not widget.winfo_ismapped():
+        if widget.winfo_manager() != "pack":
             widget.pack(**pack_kwargs)
 
     def _hide_row(self, widget: "tk.Widget | None") -> None:
         if widget is None:
             return
-        if widget.winfo_ismapped():
+        try:
             widget.pack_forget()
+        except tk.TclError:
+            pass
 
     def _apply_layout_mode(self, force: bool = False) -> None:
         should_compact = self.session_active
@@ -940,6 +945,12 @@ class FitCoderWidgetApp:
             ]
         )
 
+    def _compact_exercise_name(self, name: str) -> str:
+        max_chars = 9
+        if len(name) <= max_chars:
+            return name
+        return name[: max_chars - 3] + "..."
+
     def _refresh_stats_popup(self) -> None:
         if self.stats_popup_text is None:
             return
@@ -1022,7 +1033,9 @@ class FitCoderWidgetApp:
             return
 
         self.timer_var.set(format_duration(self.remaining_seconds))
-        self.next_exercise_var.set(self._current_exercise_name())
+        self.next_exercise_var.set(
+            self._compact_exercise_name(self._current_exercise_name())
+        )
         if self.waiting_for_reps:
             self.progress_var.set(100.0)
         elif self.break_seconds > 0:
