@@ -1,51 +1,40 @@
 # Fit Coder
 
-`fit-coder` is a simple app that reminds programmers to exercise during long work sessions.
+`fit-coder` is a small app that reminds programmers to exercise during long work sessions.
 
-## What it does
+## Features
 
-- Opens a movable widget window when you run `fitcoder`
-- Lets you configure everything inside the widget
-- Set number of exercises
-- Set break length (minutes)
-- Set exercise names
-- Runs the timer and rotates through exercises
-- Rings a stronger alarm when break time is over (system sound first, terminal bell fallback)
-- Click anywhere in the widget to mute an active alarm
-- Lets you log reps directly in the widget when the break ends
-- Tracks and displays session stats in a table format (totals + per-exercise rows)
-- Starts in setup-only view (header + routine setup), then switches to compact timer view after Start Session
-- Auto-shrinks during breaks to a compact timer-only widget
-- Keeps the widget compact during both timer and reps-entry phases
-- Compact mode shows timer, progress bar, `Next:` exercise, and a `View stats` button
-- Compact mode also includes a `Pause/Resume` button for the timer
-- During reps-entry phase, compact mode adds only the reps input controls
-- Window size can be adjusted by dragging edges
+- Routine setup in the widget (exercise count, names, break length)
+- Compact movable timer widget with progress bar and `Next` exercise info
+- Reps logging after each break and per-exercise stats table
+- Alarm when break time is over, with click-to-mute support
+- CLI fallback when `tkinter` or GUI display is unavailable
 
-The app runs until you close it.
+## Quick Start
 
-## Run
+Run locally:
 
 ```bash
 python3 fit_coder.py
 ```
 
-## Install As Global Command
-
-If `~/.local/bin` is on your `PATH` (it is on your machine), create a symlink:
+Install as global command:
 
 ```bash
 ln -sf "$(pwd)/fit_coder.py" ~/.local/bin/fitcoder
-```
-
-Then run from anywhere:
-
-```bash
 fitcoder
 ```
 
-## Widget Notes
+## Screenshots
 
-- The widget uses Python `tkinter` (standard library).
-- If `tkinter` or a GUI display is unavailable, the app automatically falls back to CLI mode.
-- Use `Pin` in the widget header to keep it always on top or allow normal stacking.
+Setup:
+
+![Fit Coder setup](images/input.png)
+
+Timer:
+
+![Fit Coder timer](images/timer.png)
+
+Stats:
+
+![Fit Coder stats](images/stats.png)
