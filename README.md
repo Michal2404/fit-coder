@@ -18,11 +18,30 @@ Run locally:
 python3 fit_coder.py
 ```
 
+or
+
+```bash
+python3 -m fitcoder
+```
+
 Install as global command:
 
 ```bash
 ln -sf "$(pwd)/fit_coder.py" ~/.local/bin/fitcoder
 fitcoder
+```
+
+## Project Structure
+
+```text
+fit_coder.py          # thin launcher for backward compatibility
+fitcoder/
+  app.py              # app entrypoint (widget first, CLI fallback)
+  widget.py           # Tk widget UI and session flow
+  cli.py              # terminal fallback flow
+  alarm.py            # cross-platform alarm helpers
+  stats.py            # formatting and stats table helpers
+  models.py           # shared data models
 ```
 
 ## Screenshots

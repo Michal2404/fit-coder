@@ -26,6 +26,7 @@ RUN adduser \
     appuser
 
 COPY fit_coder.py ./fit_coder.py
+COPY fitcoder ./fitcoder
 
 USER appuser
 
